@@ -1,0 +1,28 @@
+<project name="pdi-spreadsheet-plugin" basedir="." default="default">
+
+	<description>
+	  This build file works with the subfloor.xml file.
+	</description>
+
+	<import file="build-res/subfloor-pkg.xml" />
+
+	<target name="assemble.copy-libs">
+		<copy todir="${approot.stage.dir}/lib">
+			<fileset dir="${lib.dir}/external" />
+			<fileset file="${dist.dir}/${ivy.artifact.id}-${project.revision}.jar" />
+		</copy>
+	</target>
+
+	<target name="install" depends="dist" description="compile and install into local PDI installation">
+
+		<echo message="Looking for local PDI installation in ${kettle.dir}" />
+		<available file="${kettle.dir}" type="dir" property="kettle.dir.present" />
+		<fail unless="kettle.dir.present" message="PDI installation not found. Please specify the path to your PDI installation in build/build.properties" />
+		<delete dir="${kettle.dir}/plugins/steps/${package.basename}" />
+		<unzip src="${dist.dir}/${package.basename}.zip" dest="${kettle.dir}/plugins/steps/" />
+
+		<echo message="Installed the plugin in PDI. To test, please restart Spoon." />
+
+	</target>
+
+</project>

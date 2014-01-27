@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ivy-module version="2.0" xmlns:m="http://ant.apache.org/ivy/maven">
+  <info organisation="${ivy.artifact.group}" module="${ivy.artifact.id}" revision="${project.revision}"/>
+
+  <configurations defaultconfmapping="default_internal->default,sources">
+    <conf name="default"/>
+    <conf name="test" visibility="private"/>
+    <conf name="default_internal" visibility="private"/>
+    <conf name="default_external"/>
+  </configurations>
+
+  <dependencies defaultconf="default">
+
+    <!-- kettle dependencies -->
+    <dependency org="pentaho-kettle" name="kettle-core" rev="${dependency.kettle.revision}"/>
+	<dependency org="pentaho-kettle" name="kettle-engine" rev="${dependency.kettle.revision}"/>    
+	<dependency org="pentaho-kettle" name="kettle-ui-swt" rev="${dependency.kettle.revision}"/>
+    <dependency org="pentaho" name="metastore" rev="${dependency.pentaho-metastore.revision}"/>
+
+	<!-- swt dependencies -->
+	<dependency org="org.eclipse.swt" name="org.eclipse.swt.gtk.linux.x86_64" rev="3.5.0.v3550b"/>
+	
+    <!-- testing dependencies -->
+    <dependency org="junit" name="junit" rev="4.11" conf="default_internal->default" />
+    <dependency org="log4j" name="log4j" rev="1.2.17" conf="default_internal->default"/>
+    
+    <!-- spreadsheet dependencies -->
+	<dependency org="com.google.gdata" name="core" rev="1.47.1" conf="default_external->default"/>
+    
+  </dependencies>
+</ivy-module>
