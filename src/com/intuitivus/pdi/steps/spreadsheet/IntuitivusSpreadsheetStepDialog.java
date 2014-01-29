@@ -7,7 +7,6 @@ import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.events.ShellAdapter;
 import org.eclipse.swt.events.ShellEvent;
 import org.eclipse.swt.layout.FormAttachment;
@@ -36,6 +35,7 @@ import org.pentaho.di.ui.core.dialog.EnterTextDialog;
 import org.pentaho.di.ui.core.dialog.PreviewRowsDialog;
 import org.pentaho.di.ui.core.widget.ColumnInfo;
 import org.pentaho.di.ui.core.widget.TableView;
+import org.pentaho.di.ui.core.widget.TextVar;
 import org.pentaho.di.ui.trans.dialog.TransPreviewProgressDialog;
 import org.pentaho.di.ui.trans.step.BaseStepDialog;
 
@@ -43,6 +43,8 @@ import com.google.gdata.data.spreadsheet.CellEntry;
 import com.google.gdata.data.spreadsheet.WorksheetEntry;
 import com.google.gdata.data.spreadsheet.WorksheetFeed;
 import com.google.gdata.util.AuthenticationException;
+import com.intuitivus.pdi.steps.spreadsheet.IntuitivusSpreadsheetStepMeta.HeaderType;
+import com.intuitivus.pdi.steps.spreadsheet.util.Range;
 import com.intuitivus.pdi.steps.spreadsheet.util.SpreadsheetUtil;
 
 public class IntuitivusSpreadsheetStepDialog extends BaseStepDialog implements StepDialogInterface
@@ -56,35 +58,40 @@ public class IntuitivusSpreadsheetStepDialog extends BaseStepDialog implements S
 
 	private Label driveUserLabel;
 	private FormData driveUserLabelFormData;
-	private Text driveUserField;
+	private TextVar driveUserField;
 	private FormData driveUserFieldFormData;
 
 	private Label drivePasswordLabel;
 	private FormData drivePasswordLabelFormData;
-	private Text drivePasswordField;
+	private TextVar drivePasswordField;
 	private FormData drivePasswordFieldFormData;
 
 	private Label driveDocumentIdLabel;
 	private FormData driveDocumentIdLabelFormData;
-	private Text driveDocumentIdField;
+	private TextVar driveDocumentIdField;
 	private FormData driveDocumentIdFieldFormData;
 
 	private Label driveSheetLabel;
 	private FormData driveSheetLabelFormData;
-	private Text driveSheetField;
+	private TextVar driveSheetField;
 	private FormData driveSheetFieldFormData;
 	private Button driveSheetRefresh;
 	private FormData driveSheetRefreshFormData;
+
+	private Label driveRangeLabel;
+	private FormData driveRangeLabelFormData;
+	private TextVar driveRangeField;
+	private FormData driveRangeFieldFormData;
 
 	private Label driveHeaderLabel;
 	private FormData driveHeaderLabelFormData;
 	private Combo driveHeaderField;
 	private FormData driveHeaderFieldFormData;
 
-	private Label driveRangeLabel;
-	private FormData driveRangeLabelFormData;
-	private Text driveRangeField;
-	private FormData driveRangeFieldFormData;
+	private Label driveEmptyLinesLabel;
+	private FormData driveEmptyLinesLabelFormData;
+	private Button driveEmptyLinesField;
+	private FormData driveEmptyLinesFieldFormData;
 
 	public IntuitivusSpreadsheetStepDialog(Shell parent, Object in, TransMeta transMeta, String sname)
 	{
@@ -104,37 +111,17 @@ public class IntuitivusSpreadsheetStepDialog extends BaseStepDialog implements S
 
 		changed = meta.hasChanged();
 
-		ModifyListener lsMod = new ModifyListener()
+		final Listener lsMod = new Listener()
 		{
-			public void modifyText(ModifyEvent e)
-			{
-				meta.setChanged();
-			}
-		};
-
-		SelectionListener lsSheet = new SelectionListener()
-		{
-
 			@Override
-			public void widgetSelected(SelectionEvent arg0)
+			public void handleEvent(Event event)
 			{
-				IntuitivusSpreadsheetStepMeta meta = new IntuitivusSpreadsheetStepMeta();
-				getInfo(meta);
-				if (meta.hasDataToConnect())
+				if (!meta.hasChanged())
 				{
-					String title = BaseMessages.getString(PKG, "com.intuitivus.pdi.steps.spreadsheet.dialog.DriveSheet.Search.Title");
-					String description = BaseMessages.getString(PKG, "com.intuitivus.pdi.steps.spreadsheet.dialog.DriveSheet.Search.Description");
-					EnterSelectionDialog selection = new EnterSelectionDialog(shell, getSheets(meta), title, description);
-					selection.setMulti(false);
-					String selectedSheet = selection.open();
-					if(selectedSheet != null)
-						driveSheetField.setText(selectedSheet);
+					shell.setText(shell.getText() + " *");
 				}
-			}
-
-			@Override
-			public void widgetDefaultSelected(SelectionEvent arg0)
-			{
+				meta.setChanged();
+				wPreview.setEnabled(meta.hasDataToConnect());
 			}
 		};
 
@@ -197,8 +184,6 @@ public class IntuitivusSpreadsheetStepDialog extends BaseStepDialog implements S
 		wStepname = new Text(shell, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
 		wStepname.setText(stepname);
 		wStepname.setLayoutData(fdStepname);
-		wStepname.addModifyListener(lsMod);
-		wStepname.addSelectionListener(lsDef);
 		props.setLook(wStepname);
 
 		fdlStepname = new FormData();
@@ -218,10 +203,8 @@ public class IntuitivusSpreadsheetStepDialog extends BaseStepDialog implements S
 		driveUserFieldFormData.top = new FormAttachment(wStepname, margin);
 		driveUserFieldFormData.left = new FormAttachment(middle, 0);
 		driveUserFieldFormData.right = new FormAttachment(100, 0);
-		driveUserField = new Text(shell, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
+		driveUserField = new TextVar(transMeta, shell, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
 		driveUserField.setLayoutData(driveUserFieldFormData);
-		driveUserField.addModifyListener(lsMod);
-		driveUserField.addSelectionListener(lsDef);
 		props.setLook(driveUserField);
 
 		driveUserLabelFormData = new FormData();
@@ -241,10 +224,8 @@ public class IntuitivusSpreadsheetStepDialog extends BaseStepDialog implements S
 		drivePasswordFieldFormData.top = new FormAttachment(driveUserField, margin);
 		drivePasswordFieldFormData.left = new FormAttachment(middle, 0);
 		drivePasswordFieldFormData.right = new FormAttachment(100, 0);
-		drivePasswordField = new Text(shell, SWT.PASSWORD | SWT.SINGLE | SWT.LEFT | SWT.BORDER);
+		drivePasswordField = new TextVar(transMeta, shell, SWT.PASSWORD | SWT.SINGLE | SWT.LEFT | SWT.BORDER);
 		drivePasswordField.setLayoutData(drivePasswordFieldFormData);
-		drivePasswordField.addModifyListener(lsMod);
-		drivePasswordField.addSelectionListener(lsDef);
 		props.setLook(drivePasswordField);
 
 		drivePasswordLabelFormData = new FormData();
@@ -264,10 +245,8 @@ public class IntuitivusSpreadsheetStepDialog extends BaseStepDialog implements S
 		driveDocumentIdFieldFormData.top = new FormAttachment(drivePasswordField, margin);
 		driveDocumentIdFieldFormData.left = new FormAttachment(middle, 0);
 		driveDocumentIdFieldFormData.right = new FormAttachment(100, 0);
-		driveDocumentIdField = new Text(shell, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
+		driveDocumentIdField = new TextVar(transMeta, shell, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
 		driveDocumentIdField.setLayoutData(driveDocumentIdFieldFormData);
-		driveDocumentIdField.addModifyListener(lsMod);
-		driveDocumentIdField.addSelectionListener(lsDef);
 		props.setLook(driveDocumentIdField);
 
 		driveDocumentIdLabelFormData = new FormData();
@@ -287,10 +266,8 @@ public class IntuitivusSpreadsheetStepDialog extends BaseStepDialog implements S
 		driveSheetFieldFormData.top = new FormAttachment(driveDocumentIdField, margin);
 		driveSheetFieldFormData.left = new FormAttachment(middle, 0);
 		driveSheetFieldFormData.right = new FormAttachment(80, 0);
-		driveSheetField = new Text(shell, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
+		driveSheetField = new TextVar(transMeta, shell, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
 		driveSheetField.setLayoutData(driveSheetFieldFormData);
-		driveSheetField.addModifyListener(lsMod);
-		driveSheetField.addSelectionListener(lsDef);
 		props.setLook(driveSheetField);
 
 		driveSheetRefreshFormData = new FormData();
@@ -302,7 +279,6 @@ public class IntuitivusSpreadsheetStepDialog extends BaseStepDialog implements S
 		driveSheetRefresh.setText(BaseMessages.getString(PKG, "com.intuitivus.pdi.steps.spreadsheet.dialog.DriveSheet.Search"));
 		driveSheetRefresh.setAlignment(SWT.CENTER);
 		driveSheetRefresh.setLayoutData(driveSheetRefreshFormData);
-		driveSheetRefresh.addSelectionListener(lsSheet);
 		props.setLook(driveSheetRefresh);
 
 		driveSheetLabelFormData = new FormData();
@@ -322,10 +298,8 @@ public class IntuitivusSpreadsheetStepDialog extends BaseStepDialog implements S
 		driveRangeFieldFormData.top = new FormAttachment(driveSheetField, margin);
 		driveRangeFieldFormData.left = new FormAttachment(middle, 0);
 		driveRangeFieldFormData.right = new FormAttachment(100, 0);
-		driveRangeField = new Text(shell, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
+		driveRangeField = new TextVar(transMeta, shell, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
 		driveRangeField.setLayoutData(driveRangeFieldFormData);
-		driveRangeField.addModifyListener(lsMod);
-		driveRangeField.addSelectionListener(lsDef);
 		props.setLook(driveRangeField);
 
 		driveRangeLabelFormData = new FormData();
@@ -351,7 +325,6 @@ public class IntuitivusSpreadsheetStepDialog extends BaseStepDialog implements S
 		driveHeaderField.add(BaseMessages.getString(PKG, "com.intuitivus.pdi.steps.spreadsheet.dialog.DriveHeader.Type.FirstRow"));
 		driveHeaderField.select(0);
 		driveHeaderField.setLayoutData(driveHeaderFieldFormData);
-		driveHeaderField.addModifyListener(lsMod);
 		props.setLook(driveHeaderField);
 
 		driveHeaderLabelFormData = new FormData();
@@ -363,6 +336,28 @@ public class IntuitivusSpreadsheetStepDialog extends BaseStepDialog implements S
 		driveHeaderLabel.setText(BaseMessages.getString(PKG, "com.intuitivus.pdi.steps.spreadsheet.dialog.DriveHeader.Label"));
 		driveHeaderLabel.setLayoutData(driveHeaderLabelFormData);
 		props.setLook(driveHeaderLabel);
+
+		//
+		// Drive Empty Lines
+		//
+		driveEmptyLinesFieldFormData = new FormData();
+		driveEmptyLinesFieldFormData.top = new FormAttachment(driveHeaderField, margin);
+		driveEmptyLinesFieldFormData.left = new FormAttachment(middle, 0);
+		driveEmptyLinesFieldFormData.right = new FormAttachment(100, 0);
+
+		driveEmptyLinesField = new Button(shell, SWT.CHECK | SWT.LEFT | SWT.BORDER);
+		driveEmptyLinesField.setLayoutData(driveEmptyLinesFieldFormData);
+		props.setLook(driveEmptyLinesField);
+
+		driveEmptyLinesLabelFormData = new FormData();
+		driveEmptyLinesLabelFormData.top = new FormAttachment(driveEmptyLinesField, 0, SWT.CENTER);
+		driveEmptyLinesLabelFormData.bottom = new FormAttachment(driveEmptyLinesField, 0, SWT.CENTER);
+		driveEmptyLinesLabelFormData.left = new FormAttachment(0, 0);
+		driveEmptyLinesLabelFormData.right = new FormAttachment(middle, -margin);
+		driveEmptyLinesLabel = new Label(shell, SWT.RIGHT);
+		driveEmptyLinesLabel.setText(BaseMessages.getString(PKG, "com.intuitivus.pdi.steps.spreadsheet.dialog.DriveEmptyLines.Label"));
+		driveEmptyLinesLabel.setLayoutData(driveEmptyLinesLabelFormData);
+		props.setLook(driveEmptyLinesLabel);
 
 		//
 		// Output table
@@ -381,14 +376,59 @@ public class IntuitivusSpreadsheetStepDialog extends BaseStepDialog implements S
 		ciKeys[7] = new ColumnInfo(BaseMessages.getString(PKG, "com.intuitivus.pdi.steps.spreadsheet.dialog.table.column.Decimal"), ColumnInfo.COLUMN_TYPE_TEXT, false);
 		ciKeys[8] = new ColumnInfo(BaseMessages.getString(PKG, "com.intuitivus.pdi.steps.spreadsheet.dialog.table.column.Group"), ColumnInfo.COLUMN_TYPE_TEXT, false);
 
-		fieldsTable = new TableView(transMeta, shell, SWT.BORDER | SWT.FULL_SELECTION | SWT.MULTI | SWT.V_SCROLL | SWT.H_SCROLL, ciKeys, keyWidgetRows, lsMod, props);
+		fieldsTable = new TableView(transMeta, shell, SWT.BORDER | SWT.FULL_SELECTION | SWT.MULTI | SWT.V_SCROLL | SWT.H_SCROLL, ciKeys, keyWidgetRows, null, props);
 
 		FormData fdReturn = new FormData();
-		fdReturn.top = new FormAttachment(driveHeaderField, margin);
+		fdReturn.top = new FormAttachment(driveEmptyLinesField, margin);
 		fdReturn.bottom = new FormAttachment(100, -50);
 		fdReturn.left = new FormAttachment(0, 0);
 		fdReturn.right = new FormAttachment(100, 0);
 		fieldsTable.setLayoutData(fdReturn);
+
+		populateDialog();
+
+		wStepname.addListener(SWT.Modify, lsMod);
+		wStepname.addSelectionListener(lsDef);
+		driveUserField.getTextWidget().addListener(SWT.Modify, lsMod);
+		driveUserField.addSelectionListener(lsDef);
+		drivePasswordField.getTextWidget().addListener(SWT.Modify, lsMod);
+		drivePasswordField.addSelectionListener(lsDef);
+		driveDocumentIdField.getTextWidget().addListener(SWT.Modify, lsMod);
+		driveDocumentIdField.addSelectionListener(lsDef);
+		driveSheetField.getTextWidget().addListener(SWT.Modify, lsMod);
+		driveSheetField.addSelectionListener(lsDef);
+		driveSheetRefresh.addListener(SWT.Modify, lsMod);
+		driveSheetRefresh.addListener(SWT.Selection, new Listener()
+		{
+			@Override
+			public void handleEvent(Event e)
+			{
+				IntuitivusSpreadsheetStepMeta meta = new IntuitivusSpreadsheetStepMeta();
+				getInfo(meta);
+				if (meta.hasDataToConnect())
+				{
+					String title = BaseMessages.getString(PKG, "com.intuitivus.pdi.steps.spreadsheet.dialog.DriveSheet.Search.Title");
+					String description = BaseMessages.getString(PKG, "com.intuitivus.pdi.steps.spreadsheet.dialog.DriveSheet.Search.Description");
+					EnterSelectionDialog selection = new EnterSelectionDialog(shell, getSheets(meta), title, description);
+					selection.setMulti(false);
+					String selectedSheet = selection.open();
+					if (selectedSheet != null)
+						driveSheetField.setText(selectedSheet);
+				}
+			}
+		});
+		driveRangeField.getTextWidget().addListener(SWT.Modify, lsMod);
+		driveRangeField.addSelectionListener(lsDef);
+		driveHeaderField.addListener(SWT.Selection, lsMod);
+		driveEmptyLinesField.addListener(SWT.Selection, lsMod);
+		fieldsTable.addModifyListener(new ModifyListener()
+		{
+			@Override
+			public void modifyText(ModifyEvent arg0)
+			{
+				lsMod.handleEvent(null);
+			}
+		});
 
 		wOK = new Button(shell, SWT.PUSH);
 		wOK.setText(BaseMessages.getString(PKG, "System.Button.OK"));
@@ -417,7 +457,6 @@ public class IntuitivusSpreadsheetStepDialog extends BaseStepDialog implements S
 		});
 
 		setSize();
-		populateDialog();
 
 		meta.setChanged(changed);
 
@@ -464,10 +503,12 @@ public class IntuitivusSpreadsheetStepDialog extends BaseStepDialog implements S
 			driveHeaderField.select(meta.getDriveHeader().ordinal());
 		}
 
+		driveEmptyLinesField.setSelection(meta.isDriveAcceptEmptyLines());
+
 		populateTable(meta);
 
 	}
-	
+
 	private void populateTable(IntuitivusSpreadsheetStepMeta meta)
 	{
 
@@ -539,7 +580,7 @@ public class IntuitivusSpreadsheetStepDialog extends BaseStepDialog implements S
 	{
 		IntuitivusSpreadsheetStepMeta meta = new IntuitivusSpreadsheetStepMeta();
 		getInfo(meta);
-		
+
 		boolean useDefinedOutput = fieldsTable.table.getItemCount() > 0;
 		meta.setAdoptOutput(useDefinedOutput);
 
@@ -571,48 +612,53 @@ public class IntuitivusSpreadsheetStepDialog extends BaseStepDialog implements S
 	private void get()
 	{
 
+		if (meta.getDriveHeader() == HeaderType.NONE)
+			return;
+
 		IntuitivusSpreadsheetStepMeta meta = new IntuitivusSpreadsheetStepMeta();
 		getInfo(meta);
 		meta.setAdoptOutput(false);
-
-		String range = meta.getDriveRange();
-		String headerRange = meta.getRangeForHeader();
-		meta.setDriveRange(headerRange);
-
 		try
 		{
-			IntuitivusSpreadsheetStepData header = IntuitivusSpreadsheetStepData.getData(meta);
+
+			WorksheetEntry worksheet = SpreadsheetUtil.connectWorksheetFeed(meta.getDriveUser(), meta.getDrivePassword(), meta.getDriveDocumentId(), meta.getDriveSheet());
+
+			Range range = new Range(meta.getDriveRange());
+			range.realistic(worksheet);
+
+			Range headerRange = range.getRangeHeader(meta.getDriveHeader());
+			Range bodyRange = range.getRangeBody(meta.getDriveHeader());
+
+			IntuitivusSpreadsheetStepData header = new IntuitivusSpreadsheetStepData();
+			header.cellFeed = SpreadsheetUtil.connectCellFeed(worksheet, headerRange);
+			header.calculateRangeSize(headerRange);
+			header.refreshCachedData();
+
 			meta.allocate(header.cols);
 
-			CellEntry[] row = header.getNextCellRow();
-			for (int i = 0; i < row.length; i++)
+			CellEntry[] headerRow = header.getNextCellRow(false);
+			for (int i = 0; i < headerRow.length; i++)
 			{
-				meta.getOutputField()[i] = row[i].getCell().getValue();
+				meta.getOutputField()[i] = headerRow[i].getCell().getValue();
 			}
 
-			row = header.getNextCellRow();
-			if (row == null) // Row 1, single range
-			{
-				String cells[] = range.split(":");
-				int rowNumber = Integer.parseInt(cells[0].replaceAll("([A-Z]+)", ""));
-				if( rowNumber == 1 ) {
-					rowNumber++;
-					cells[0] = cells[0].replaceAll("([0-9]+)", Integer.toString(rowNumber));
-				}				
-				cells[1] = cells[1].replaceAll("([0-9]+)", Integer.toString(rowNumber));
-				meta.setDriveRange(cells[0] + ":" + cells[1]);
-				IntuitivusSpreadsheetStepData body = IntuitivusSpreadsheetStepData.getData(meta);
-				row = body.getNextCellRow();
-			}
+			IntuitivusSpreadsheetStepData body = new IntuitivusSpreadsheetStepData();
+			body.cellFeed = SpreadsheetUtil.connectCellFeed(worksheet, bodyRange);
+			body.calculateRangeSize(bodyRange);
+			body.refreshCachedData();
 
-			for (int i = 0; i < row.length; i++)
+			CellEntry[] bodyRow = body.getNextCellRow(false);
+			for (int i = 0; i < bodyRow.length; i++)
 			{
-				if(row[i].getCell().getNumericValue() == null)
+				if (bodyRow[i] == null || bodyRow[i].getCell().getNumericValue() == null)
 					meta.getOutputType()[i] = ValueMetaInterface.TYPE_STRING;
-				else {
-					if(row[i].getCell().getValue().contains("/")) {
+				else
+				{
+					if (bodyRow[i].getCell().getValue().contains("/"))
+					{
 						meta.getOutputType()[i] = ValueMetaInterface.TYPE_DATE;
-					} else {
+					} else
+					{
 						meta.getOutputType()[i] = ValueMetaInterface.TYPE_NUMBER;
 					}
 				}
@@ -660,6 +706,7 @@ public class IntuitivusSpreadsheetStepDialog extends BaseStepDialog implements S
 		meta.setDriveRange(driveRangeField.getText());
 		meta.setDriveSheet(driveSheetField.getText());
 		meta.setDriveHeader(driveHeaderField.getSelectionIndex());
+		meta.setDriveAcceptEmpty(driveEmptyLinesField.getSelection());
 
 		int total = fieldsTable.nrNonEmpty();
 		meta.allocate(total);

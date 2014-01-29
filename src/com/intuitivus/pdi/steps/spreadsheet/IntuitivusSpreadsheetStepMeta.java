@@ -1,8 +1,6 @@
 package com.intuitivus.pdi.steps.spreadsheet;
 
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.eclipse.swt.widgets.Shell;
 import org.pentaho.di.core.CheckResult;
@@ -43,6 +41,7 @@ public class IntuitivusSpreadsheetStepMeta extends BaseStepMeta implements StepM
 	private String driveSheet;
 	private String driveRange;
 	private HeaderType driveHeader;
+	private boolean driveAcceptEmptyLines;
 
 	private boolean adoptOutput = true; // for full previews
 
@@ -154,6 +153,16 @@ public class IntuitivusSpreadsheetStepMeta extends BaseStepMeta implements StepM
 	public void setDriveHeader(HeaderType driveHeader)
 	{
 		this.driveHeader = driveHeader;
+	}
+
+	public boolean isDriveAcceptEmptyLines()
+	{
+		return driveAcceptEmptyLines;
+	}
+
+	public void setDriveAcceptEmpty(boolean driveAcceptEmpty)
+	{
+		this.driveAcceptEmptyLines = driveAcceptEmpty;
 	}
 
 	public String[] getOutputField()
@@ -292,6 +301,7 @@ public class IntuitivusSpreadsheetStepMeta extends BaseStepMeta implements StepM
 		retval.append("    ").append(XMLHandler.addTagValue("range", driveRange));
 		retval.append("    ").append(XMLHandler.addTagValue("sheet", driveSheet));
 		retval.append("    ").append(XMLHandler.addTagValue("header", driveHeader.toString()));
+		retval.append("    ").append(XMLHandler.addTagValue("emptyLines", Boolean.toString(driveAcceptEmptyLines)));
 
 		for (int i = 0; i < outputField.length; i++)
 		{
@@ -324,6 +334,7 @@ public class IntuitivusSpreadsheetStepMeta extends BaseStepMeta implements StepM
 			driveRange = XMLHandler.getTagValue(stepnode, "range");
 			driveSheet = XMLHandler.getTagValue(stepnode, "sheet");
 			driveHeader = HeaderType.valueOf(XMLHandler.getTagValue(stepnode, "header"));
+			driveAcceptEmptyLines = Boolean.parseBoolean(XMLHandler.getTagValue(stepnode, "emptyLines"));
 
 			int total = XMLHandler.countNodes(stepnode, "lookup");
 			allocate(total);
@@ -366,6 +377,7 @@ public class IntuitivusSpreadsheetStepMeta extends BaseStepMeta implements StepM
 			rep.saveStepAttribute(id_transformation, id_step, "range", driveRange);
 			rep.saveStepAttribute(id_transformation, id_step, "sheet", driveSheet);
 			rep.saveStepAttribute(id_transformation, id_step, "header", driveHeader.toString());
+			rep.saveStepAttribute(id_transformation, id_step, "emptyLines", Boolean.toString(driveAcceptEmptyLines));
 
 			for (int i = 0; i < outputField.length; i++)
 			{
@@ -397,6 +409,7 @@ public class IntuitivusSpreadsheetStepMeta extends BaseStepMeta implements StepM
 			driveRange = rep.getStepAttributeString(id_step, "range");
 			driveSheet = rep.getStepAttributeString(id_step, "sheet");
 			driveHeader = HeaderType.valueOf(rep.getStepAttributeString(id_step, "header"));
+			driveAcceptEmptyLines = Boolean.parseBoolean(rep.getStepAttributeString(id_step, "emptyLines"));
 
 			int total = rep.countNrStepAttributes(id_step, "lookup_keyfield");
 			allocate(total);
@@ -465,73 +478,6 @@ public class IntuitivusSpreadsheetStepMeta extends BaseStepMeta implements StepM
 	public boolean hasDataToConnect()
 	{
 		return driveUser != null && !driveUser.isEmpty() && drivePassword != null && !drivePassword.isEmpty() && driveDocumentId != null && !driveDocumentId.isEmpty();
-	}
-
-	public String getRangeForHeader()
-	{
-		switch (this.getDriveHeader())
-		{
-		case ROW1:
-			return this.getDriveRange().replaceAll("([0-9]+)", "1");
-
-		default:
-		case FIRST:
-			String cells[] = this.getDriveRange().split(":");
-			int row = Integer.parseInt(cells[0].replaceAll("([A-Z]+)", ""));
-			cells[1] = cells[1].replaceAll("([0-9]+)", Integer.toString(row + 1));
-			return cells[0] + ":" + cells[1];
-		}
-	}
-
-	public static int[] calculateRangeSize(String range)
-	{
-		String[] split = range.split(":");
-
-		int[] initialCell = calculateCell(split[0]);
-		int[] finalCell = calculateCell(split[1]);
-
-		int finalRange[] = { finalCell[0] - initialCell[0] + 1, finalCell[1] - initialCell[1] + 1 };
-		return finalRange;
-	}
-
-	public static int[] calculateOffset(String range)
-	{
-		String[] split = range.split(":");
-
-		int[] initialCell = calculateCell(split[0]);
-		int offset[] = { initialCell[0], initialCell[1] };
-		return offset;
-	}
-
-	public static int[] calculateCell(String cellRef)
-	{
-
-		int cell[] = { 0, 0 };
-
-		String letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-		int length = letters.length();
-
-		final Pattern pattern = Pattern.compile("([A-Z]+)([0-9]+)?");
-		final Matcher matcherInitial = pattern.matcher(cellRef);
-		if (matcherInitial.find())
-		{
-
-			String row = matcherInitial.group(2);
-			cell[0] = Integer.parseInt(row);
-
-			String col = new StringBuilder(matcherInitial.group(1)).reverse().toString();
-			char[] colLetters = col.trim().toCharArray();
-			cell[1] = 0;
-			for (int i = 0; i < colLetters.length; i++)
-			{
-				int letterValue = letters.indexOf(colLetters[i]);
-				cell[1] += ((int) Math.pow(length, i)) * (letterValue + 1);
-			}
-
-		}
-
-		return cell;
-
 	}
 
 }

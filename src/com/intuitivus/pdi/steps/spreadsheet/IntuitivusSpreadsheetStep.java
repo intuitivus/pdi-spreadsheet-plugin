@@ -14,7 +14,9 @@ import org.pentaho.di.trans.step.StepMeta;
 import org.pentaho.di.trans.step.StepMetaInterface;
 
 import com.google.gdata.data.spreadsheet.CellEntry;
+import com.google.gdata.data.spreadsheet.WorksheetEntry;
 import com.google.gdata.util.AuthenticationException;
+import com.intuitivus.pdi.steps.spreadsheet.util.Range;
 import com.intuitivus.pdi.steps.spreadsheet.util.SpreadsheetUtil;
 
 public class IntuitivusSpreadsheetStep extends BaseStep implements StepInterface
@@ -55,43 +57,25 @@ public class IntuitivusSpreadsheetStep extends BaseStep implements StepInterface
 		{
 			first = false;
 
-			String user = meta.getDriveUser();
-			String password = meta.getDrivePassword();
-			String documentId = meta.getDriveDocumentId();
-			String sheet = meta.getDriveSheet();
-			String range = meta.getDriveRange();
+			String user = environmentSubstitute(meta.getDriveUser());
+			String password = environmentSubstitute(meta.getDrivePassword());
+			String documentId = environmentSubstitute(meta.getDriveDocumentId());
+			String sheet = environmentSubstitute(meta.getDriveSheet());
+			String rangeRef = environmentSubstitute(meta.getDriveRange());
 
-			String cells[] = range.split(":");
-			int rowNumber;
-			
-			switch (meta.getDriveHeader())
-			{
-			case FIRST:
-				rowNumber = Integer.parseInt(cells[0].replaceAll("([A-Z]+)", ""));
-				cells[0] = cells[0].replaceAll("([0-9]+)", Integer.toString(rowNumber+1));
-				break;
-			case NONE:
-				break;
-			case ROW1:
-				rowNumber = Integer.parseInt(cells[0].replaceAll("([A-Z]+)", ""));
-				if(rowNumber == 1)
-					cells[0] = cells[0].replaceAll("([0-9]+)", Integer.toString(rowNumber+1));
-				break;
-			default:
-				break;
+			Range range = new Range(rangeRef);
 
-			}
-			
-			range = cells[0] + ":" + cells[1];
-
+			WorksheetEntry worksheet;
 			try
 			{
-				data.cellFeed = SpreadsheetUtil.connectCellFeed(user, password, documentId, sheet, range);
+				worksheet = SpreadsheetUtil.connectWorksheetFeed(user, password, documentId, sheet);
+				data.cellFeed = SpreadsheetUtil.connectCellFeed(worksheet, range);
 			} catch (AuthenticationException e)
 			{
 				throw new KettleStepException();
 			}
 
+			range.realistic(worksheet);
 			data.calculateRangeSize(range);
 			data.refreshCachedData();
 
@@ -112,7 +96,7 @@ public class IntuitivusSpreadsheetStep extends BaseStep implements StepInterface
 		}
 
 		int size = data.outputRowMeta.size();
-		CellEntry[] entry = data.getNextCellRow();
+		CellEntry[] entry = data.getNextCellRow(meta.isDriveAcceptEmptyLines());
 		if (entry != null)
 		{
 			if (!meta.adoptOutput())
@@ -121,26 +105,35 @@ public class IntuitivusSpreadsheetStep extends BaseStep implements StepInterface
 			Object[] outputRow = RowDataUtil.allocateRowData(size);
 			for (int i = 0; i < size; i++)
 			{
-				if (meta.adoptOutput()) {
-					
+
+				if (entry[i] == null)
+				{
+					outputRow[i] = null;
+					continue;
+				}
+
+				if (meta.adoptOutput())
+				{
+
 					Object value;
-					
+
 					ValueMetaInterface valueMeta = data.outputRowMeta.getValueMeta(i);
 					int type = valueMeta.getType();
-					
-					switch(type) {
+
+					switch (type)
+					{
 					default:
 					case ValueMetaInterface.TYPE_STRING:
 						value = entry[i].getCell().getValue();
 						break;
-						
+
 					case ValueMetaInterface.TYPE_NUMBER:
 						value = entry[i].getCell().getNumericValue();
 						break;
 					}
-					
+
 					outputRow[i] = data.outputRowMeta.getValueMeta(i).convertData(data.conversionMeta[i], value);
-					
+
 				} else
 					outputRow[i] = entry[i].getCell().getValue();
 			}

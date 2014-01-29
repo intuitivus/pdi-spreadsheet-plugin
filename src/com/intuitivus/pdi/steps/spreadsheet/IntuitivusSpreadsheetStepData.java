@@ -8,8 +8,7 @@ import org.pentaho.di.trans.step.StepDataInterface;
 import com.google.gdata.data.spreadsheet.Cell;
 import com.google.gdata.data.spreadsheet.CellEntry;
 import com.google.gdata.data.spreadsheet.CellFeed;
-import com.google.gdata.util.AuthenticationException;
-import com.intuitivus.pdi.steps.spreadsheet.util.SpreadsheetUtil;
+import com.intuitivus.pdi.steps.spreadsheet.util.Range;
 
 public class IntuitivusSpreadsheetStepData extends BaseStepData implements StepDataInterface
 {
@@ -27,14 +26,13 @@ public class IntuitivusSpreadsheetStepData extends BaseStepData implements StepD
 	{
 		super();
 	}
-	
-	public void calculateRangeSize(String range) {
-		int[] rangeSize = IntuitivusSpreadsheetStepMeta.calculateRangeSize(range);
-		int[] offset = IntuitivusSpreadsheetStepMeta.calculateOffset(range);
-		rows = rangeSize[0];
-		cols = rangeSize[1];
-		offsetrow = offset[0];
-		offsetcol = offset[1];
+
+	public void calculateRangeSize(Range range)
+	{
+		rows = range.getHeight();
+		cols = range.getWidth();
+		offsetrow = range.getFrom().getRow();
+		offsetcol = range.getFrom().getCol();
 	}
 
 	public void refreshCachedData()
@@ -47,23 +45,40 @@ public class IntuitivusSpreadsheetStepData extends BaseStepData implements StepD
 		}
 	}
 
-	public CellEntry[] getNextCellRow()
+	public boolean isEmptyRow(CellEntry[] entries)
+	{
+		boolean hasData = false;
+		for (int i = 0; i < entries.length; i++)
+		{
+			if (entries[i] != null)
+			{
+				hasData = true;
+				break;
+			}
+		}
+		return !hasData;
+	}
+
+	public CellEntry[] getNextCellRow(boolean acceptEmptyLines)
 	{
 		if (this.currentRow < this.rows)
 		{
-			return this.cellEntries[this.currentRow++];
+			CellEntry[] entry = this.cellEntries[this.currentRow++];
+
+			if (!acceptEmptyLines)
+			{
+				while (entry != null && isEmptyRow(entry))
+				{
+					entry = getNextCellRow(acceptEmptyLines);
+				}
+			}
+
+			return entry;
+
 		} else
 		{
 			return null;
 		}
-	}
-	
-	public static IntuitivusSpreadsheetStepData getData(IntuitivusSpreadsheetStepMeta meta) throws AuthenticationException {
-		IntuitivusSpreadsheetStepData data = new IntuitivusSpreadsheetStepData();
-		data.cellFeed = SpreadsheetUtil.connectCellFeed(meta.getDriveUser(), meta.getDrivePassword(), meta.getDriveDocumentId(), meta.getDriveSheet(), meta.getDriveRange());
-		data.calculateRangeSize(meta.getDriveRange());
-		data.refreshCachedData();
-		return data;
 	}
 
 }

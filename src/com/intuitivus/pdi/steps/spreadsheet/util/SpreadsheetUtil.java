@@ -40,7 +40,7 @@ public class SpreadsheetUtil
 
 	}
 
-	public static CellFeed connectCellFeed(String user, String password, String documentId, String sheet, String range) throws AuthenticationException
+	public static WorksheetEntry connectWorksheetFeed(String user, String password, String documentId, String sheet) throws AuthenticationException
 	{
 
 		WorksheetFeed feed = connectWorksheetFeed(user, password, documentId);
@@ -60,20 +60,34 @@ public class SpreadsheetUtil
 				}
 			}
 		}
+		return worksheet;
+
+	}
+
+	public static CellFeed connectCellFeed(String user, String password, String documentId, String sheet, Range range) throws AuthenticationException
+	{
+		WorksheetEntry worksheet = connectWorksheetFeed(user, password, documentId, sheet);
+		return connectCellFeed(worksheet, range);
+	}
+
+	public static CellFeed connectCellFeed(WorksheetEntry worksheet, Range range) throws AuthenticationException
+	{
 
 		CellQuery query = new CellQuery(worksheet.getCellFeedUrl());
-		query.setRange(range);
-		query.setReturnEmpty(true);
+		if (range != null)
+			query.setRange(range.toRange(worksheet));
+
+		query.setReturnEmpty(false);
 
 		try
 		{
-			return feed.getService().query(query, CellFeed.class);
+			return worksheet.getService().query(query, CellFeed.class);
 		} catch (ServiceException e)
 		{
 		} catch (IOException e)
 		{
 		}
-		
+
 		return null;
 
 	}
