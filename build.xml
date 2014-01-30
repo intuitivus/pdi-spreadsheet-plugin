@@ -9,8 +9,8 @@
 	<target name="assemble.copy-libs">
 		<copy todir="${approot.stage.dir}/lib">
 			<fileset dir="${lib.dir}/external" />
-			<fileset file="${dist.dir}/${ivy.artifact.id}-${project.revision}.jar" />
 		</copy>
+		<copy file="${dist.dir}/${ivy.artifact.id}-${project.revision}.jar" tofile="${approot.stage.dir}/lib/${ivy.artifact.id}.jar" />
 	</target>
 
 	<target name="install" depends="dist" description="compile and install into local PDI installation">
