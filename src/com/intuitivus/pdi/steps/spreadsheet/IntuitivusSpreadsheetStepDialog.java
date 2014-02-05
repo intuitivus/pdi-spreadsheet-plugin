@@ -437,6 +437,7 @@ public class IntuitivusSpreadsheetStepDialog extends BaseStepDialog implements S
 		wPreview = new Button(shell, SWT.PUSH);
 		wPreview.setText(BaseMessages.getString(PKG, "System.Button.Preview"));
 		wPreview.addListener(SWT.Selection, lsPreview);
+		wPreview.setEnabled(meta.hasDataToConnect());
 
 		wGet = new Button(shell, SWT.PUSH);
 		wGet.setText(BaseMessages.getString(PKG, "System.Button.GetFields"));

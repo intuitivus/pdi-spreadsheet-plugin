@@ -131,6 +131,10 @@ public class Range
 			return newRange;
 
 		case ROW1:
+			if(newRange.from.getRow() == 1)
+				newRange.from.setRow(newRange.from.getRow() + 1);
+			return newRange;
+			
 		case NONE:
 		default:
 			return newRange;

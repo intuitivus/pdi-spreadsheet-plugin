@@ -68,16 +68,21 @@ public class IntuitivusSpreadsheetStep extends BaseStep implements StepInterface
 			WorksheetEntry worksheet;
 			try
 			{
+				
 				worksheet = SpreadsheetUtil.connectWorksheetFeed(user, password, documentId, sheet);
-				data.cellFeed = SpreadsheetUtil.connectCellFeed(worksheet, range);
+
+				range.realistic(worksheet);
+				Range bodyRange = range.getRangeBody(meta.getDriveHeader());
+				bodyRange.realistic(worksheet);
+				
+				data.cellFeed = SpreadsheetUtil.connectCellFeed(worksheet, bodyRange);
+				data.calculateRangeSize(bodyRange);
+				data.refreshCachedData();
+				
 			} catch (AuthenticationException e)
 			{
 				throw new KettleStepException();
 			}
-
-			range.realistic(worksheet);
-			data.calculateRangeSize(range);
-			data.refreshCachedData();
 
 			data.outputRowMeta = new RowMeta();
 			if (meta.adoptOutput())
