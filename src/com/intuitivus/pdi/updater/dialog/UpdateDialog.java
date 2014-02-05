@@ -40,9 +40,10 @@ public class UpdateDialog extends Dialog
 	private PluginUpdater pluginUpdater;
 
 	private ProgressBar progressBar;
-
 	private Button downloadButton;
 	private FormData progressBarFormData;
+	private Label restart;
+	private Label text;
 
 	public UpdateDialog(Shell parent, Properties version)
 	{
@@ -96,7 +97,21 @@ public class UpdateDialog extends Dialog
 					@Override
 					public void run()
 					{
-						shell.close();
+						text.setVisible(false);
+						downloadButton.setVisible(false);
+						progressBar.setVisible(false);
+
+						restart.setText(BaseMessages.getString(PKG, "com.intuitivus.pdi.updater.dialog.restartnow"));
+						FormData restartFormData = new FormData();
+						restartFormData.left = new FormAttachment(0, 0);
+						restartFormData.right = new FormAttachment(100, 0);
+						restartFormData.top = new FormAttachment(0, 0);
+						restart.setLayoutData(restartFormData);
+
+						shell.layout();
+
+						Point computeSize = shell.computeSize(WIDTH, SWT.DEFAULT, true);
+						shell.setSize(new Point(WIDTH, computeSize.y));
 					}
 				});
 			}
@@ -104,16 +119,6 @@ public class UpdateDialog extends Dialog
 			@Override
 			public void onDataFinish(Properties version)
 			{
-				display.asyncExec(new Runnable()
-				{
-					@Override
-					public void run()
-					{
-						progressBar = new ProgressBar(shell, SWT.INDETERMINATE);
-						props.setLook(progressBar);
-						progressBar.setLayoutData(progressBarFormData);
-					}
-				});
 			}
 
 		};
@@ -135,7 +140,7 @@ public class UpdateDialog extends Dialog
 		formLayout.marginHeight = Const.FORM_MARGIN;
 		shell.setLayout(formLayout);
 
-		Label text = new Label(shell, SWT.WRAP);
+		text = new Label(shell, SWT.WRAP);
 		text.setText(BaseMessages.getString(PKG, "com.intuitivus.pdi.updater.dialog.intro"));
 		props.setLook(text);
 		FormData textFormData = new FormData();
@@ -177,7 +182,7 @@ public class UpdateDialog extends Dialog
 		progressBar.setMaximum(100);
 		progressBar.setSelection(0);
 
-		Label restart = new Label(shell, SWT.WRAP);
+		restart = new Label(shell, SWT.WRAP);
 		restart.setText(BaseMessages.getString(PKG, "com.intuitivus.pdi.updater.dialog.restart"));
 		props.setLook(restart);
 		FormData restartFormData = new FormData();

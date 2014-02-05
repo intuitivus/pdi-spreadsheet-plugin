@@ -50,7 +50,7 @@ public class DialogTest
 		}
 
 	}
-	
+
 	@Test
 	@Ignore
 	public void dialog() throws KettleException

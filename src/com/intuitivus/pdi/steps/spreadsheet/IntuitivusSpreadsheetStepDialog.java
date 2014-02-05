@@ -13,8 +13,12 @@ import org.eclipse.swt.events.ShellEvent;
 import org.eclipse.swt.layout.FormAttachment;
 import org.eclipse.swt.layout.FormData;
 import org.eclipse.swt.layout.FormLayout;
+import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
@@ -53,9 +57,16 @@ public class IntuitivusSpreadsheetStepDialog extends BaseStepDialog implements S
 	private static Class<?> PKG = IntuitivusSpreadsheetStepDialog.class;
 	private static Properties version;
 
+	private static final int MARGIN = Const.MARGIN;
+	private final int MIDDLE;
+
 	private IntuitivusSpreadsheetStepMeta meta;
 
+	private Composite inner;
+
 	private TableView fieldsTable;
+
+	private Label versionLabel;
 
 	private Label driveUserLabel;
 	private FormData driveUserLabelFormData;
@@ -99,6 +110,7 @@ public class IntuitivusSpreadsheetStepDialog extends BaseStepDialog implements S
 	{
 		super(parent, (BaseStepMeta) in, transMeta, sname);
 		meta = (IntuitivusSpreadsheetStepMeta) in;
+		MIDDLE = props.getMiddlePct();
 
 		try
 		{
@@ -185,23 +197,33 @@ public class IntuitivusSpreadsheetStepDialog extends BaseStepDialog implements S
 			}
 		};
 
-		FormLayout formLayout = new FormLayout();
-		formLayout.marginWidth = Const.FORM_MARGIN;
-		formLayout.marginHeight = Const.FORM_MARGIN;
-		shell.setLayout(formLayout);
+		GridLayout gridLayout = new GridLayout(1, true);
+		gridLayout.marginHeight = 0;
+		gridLayout.marginWidth = 0;
+		gridLayout.verticalSpacing = 0;
+		gridLayout.horizontalSpacing = 0;
+		shell.setLayout(gridLayout);
+		shell.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 		shell.setText(BaseMessages.getString(PKG, "com.intuitivus.pdi.steps.spreadsheet.dialog.title"));
 
-		int middle = props.getMiddlePct();
-		int margin = Const.MARGIN;
+		inner = new Composite(shell, SWT.NONE);
+		props.setLook(inner);
+		FormLayout formLayout = new FormLayout();
+		formLayout.marginWidth = Const.FORM_MARGIN;
+		formLayout.marginHeight = 0;
+		inner.setLayout(formLayout);
+		inner.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+
+		addStatusBar();
 
 		//
 		// Stepname line
 		//
 		fdStepname = new FormData();
-		fdStepname.top = new FormAttachment(0, margin);
-		fdStepname.left = new FormAttachment(middle, 0);
+		fdStepname.top = new FormAttachment(0, MARGIN);
+		fdStepname.left = new FormAttachment(MIDDLE, 0);
 		fdStepname.right = new FormAttachment(100, 0);
-		wStepname = new Text(shell, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
+		wStepname = new Text(inner, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
 		wStepname.setText(stepname);
 		wStepname.setLayoutData(fdStepname);
 		props.setLook(wStepname);
@@ -210,8 +232,8 @@ public class IntuitivusSpreadsheetStepDialog extends BaseStepDialog implements S
 		fdlStepname.top = new FormAttachment(wStepname, 0, SWT.CENTER);
 		fdlStepname.bottom = new FormAttachment(wStepname, 0, SWT.CENTER);
 		fdlStepname.left = new FormAttachment(0, 0);
-		fdlStepname.right = new FormAttachment(middle, -margin);
-		wlStepname = new Label(shell, SWT.RIGHT);
+		fdlStepname.right = new FormAttachment(MIDDLE, -MARGIN);
+		wlStepname = new Label(inner, SWT.RIGHT);
 		wlStepname.setText(BaseMessages.getString(PKG, "com.intuitivus.pdi.steps.spreadsheet.dialog.StepName.Label"));
 		wlStepname.setLayoutData(fdlStepname);
 		props.setLook(wlStepname);
@@ -219,20 +241,13 @@ public class IntuitivusSpreadsheetStepDialog extends BaseStepDialog implements S
 		//
 		// Drive User
 		//
-		driveUserFieldFormData = new FormData();
-		driveUserFieldFormData.top = new FormAttachment(wStepname, margin);
-		driveUserFieldFormData.left = new FormAttachment(middle, 0);
-		driveUserFieldFormData.right = new FormAttachment(100, 0);
-		driveUserField = new TextVar(transMeta, shell, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
+		driveUserFieldFormData = getFormDataForField(wStepname);
+		driveUserField = new TextVar(transMeta, inner, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
 		driveUserField.setLayoutData(driveUserFieldFormData);
 		props.setLook(driveUserField);
 
-		driveUserLabelFormData = new FormData();
-		driveUserLabelFormData.top = new FormAttachment(driveUserField, 0, SWT.CENTER);
-		driveUserLabelFormData.bottom = new FormAttachment(driveUserField, 0, SWT.CENTER);
-		driveUserLabelFormData.left = new FormAttachment(0, 0);
-		driveUserLabelFormData.right = new FormAttachment(middle, -margin);
-		driveUserLabel = new Label(shell, SWT.RIGHT);
+		driveUserLabelFormData = getFormDataForLabel(driveUserField);
+		driveUserLabel = new Label(inner, SWT.RIGHT);
 		driveUserLabel.setText(BaseMessages.getString(PKG, "com.intuitivus.pdi.steps.spreadsheet.dialog.DriveUser.Label"));
 		driveUserLabel.setLayoutData(driveUserLabelFormData);
 		props.setLook(driveUserLabel);
@@ -240,20 +255,13 @@ public class IntuitivusSpreadsheetStepDialog extends BaseStepDialog implements S
 		//
 		// Drive Password
 		//
-		drivePasswordFieldFormData = new FormData();
-		drivePasswordFieldFormData.top = new FormAttachment(driveUserField, margin);
-		drivePasswordFieldFormData.left = new FormAttachment(middle, 0);
-		drivePasswordFieldFormData.right = new FormAttachment(100, 0);
-		drivePasswordField = new TextVar(transMeta, shell, SWT.PASSWORD | SWT.SINGLE | SWT.LEFT | SWT.BORDER);
+		drivePasswordFieldFormData = getFormDataForField(driveUserField);
+		drivePasswordField = new TextVar(transMeta, inner, SWT.PASSWORD | SWT.SINGLE | SWT.LEFT | SWT.BORDER);
 		drivePasswordField.setLayoutData(drivePasswordFieldFormData);
 		props.setLook(drivePasswordField);
 
-		drivePasswordLabelFormData = new FormData();
-		drivePasswordLabelFormData.top = new FormAttachment(drivePasswordField, 0, SWT.CENTER);
-		drivePasswordLabelFormData.bottom = new FormAttachment(drivePasswordField, 0, SWT.CENTER);
-		drivePasswordLabelFormData.left = new FormAttachment(0, 0);
-		drivePasswordLabelFormData.right = new FormAttachment(middle, -margin);
-		drivePasswordLabel = new Label(shell, SWT.RIGHT);
+		drivePasswordLabelFormData = getFormDataForLabel(drivePasswordField);
+		drivePasswordLabel = new Label(inner, SWT.RIGHT);
 		drivePasswordLabel.setText(BaseMessages.getString(PKG, "com.intuitivus.pdi.steps.spreadsheet.dialog.DrivePassword.Label"));
 		drivePasswordLabel.setLayoutData(drivePasswordLabelFormData);
 		props.setLook(drivePasswordLabel);
@@ -261,20 +269,13 @@ public class IntuitivusSpreadsheetStepDialog extends BaseStepDialog implements S
 		//
 		// Drive DocumentId
 		//
-		driveDocumentIdFieldFormData = new FormData();
-		driveDocumentIdFieldFormData.top = new FormAttachment(drivePasswordField, margin);
-		driveDocumentIdFieldFormData.left = new FormAttachment(middle, 0);
-		driveDocumentIdFieldFormData.right = new FormAttachment(100, 0);
-		driveDocumentIdField = new TextVar(transMeta, shell, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
+		driveDocumentIdFieldFormData = getFormDataForField(drivePasswordField);
+		driveDocumentIdField = new TextVar(transMeta, inner, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
 		driveDocumentIdField.setLayoutData(driveDocumentIdFieldFormData);
 		props.setLook(driveDocumentIdField);
 
-		driveDocumentIdLabelFormData = new FormData();
-		driveDocumentIdLabelFormData.top = new FormAttachment(driveDocumentIdField, 0, SWT.CENTER);
-		driveDocumentIdLabelFormData.bottom = new FormAttachment(driveDocumentIdField, 0, SWT.CENTER);
-		driveDocumentIdLabelFormData.left = new FormAttachment(0, 0);
-		driveDocumentIdLabelFormData.right = new FormAttachment(middle, -margin);
-		driveDocumentIdLabel = new Label(shell, SWT.RIGHT);
+		driveDocumentIdLabelFormData = getFormDataForLabel(driveDocumentIdField);
+		driveDocumentIdLabel = new Label(inner, SWT.RIGHT);
 		driveDocumentIdLabel.setText(BaseMessages.getString(PKG, "com.intuitivus.pdi.steps.spreadsheet.dialog.DriveDocumentId.Label"));
 		driveDocumentIdLabel.setLayoutData(driveDocumentIdLabelFormData);
 		props.setLook(driveDocumentIdLabel);
@@ -282,11 +283,9 @@ public class IntuitivusSpreadsheetStepDialog extends BaseStepDialog implements S
 		//
 		// Drive Sheet
 		//
-		driveSheetFieldFormData = new FormData();
-		driveSheetFieldFormData.top = new FormAttachment(driveDocumentIdField, margin);
-		driveSheetFieldFormData.left = new FormAttachment(middle, 0);
+		driveSheetFieldFormData = getFormDataForField(driveDocumentIdField);
 		driveSheetFieldFormData.right = new FormAttachment(80, 0);
-		driveSheetField = new TextVar(transMeta, shell, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
+		driveSheetField = new TextVar(transMeta, inner, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
 		driveSheetField.setLayoutData(driveSheetFieldFormData);
 		props.setLook(driveSheetField);
 
@@ -295,19 +294,15 @@ public class IntuitivusSpreadsheetStepDialog extends BaseStepDialog implements S
 		driveSheetRefreshFormData.bottom = new FormAttachment(driveSheetField, 0, SWT.CENTER);
 		driveSheetRefreshFormData.left = new FormAttachment(driveSheetField, 0, SWT.RIGHT);
 		driveSheetRefreshFormData.right = new FormAttachment(100, 0);
-		driveSheetRefresh = new Button(shell, SWT.PUSH | SWT.LEFT | SWT.BORDER);
+		driveSheetRefresh = new Button(inner, SWT.PUSH | SWT.LEFT | SWT.BORDER);
 		driveSheetRefresh.setText(BaseMessages.getString(PKG, "com.intuitivus.pdi.steps.spreadsheet.dialog.DriveSheet.Search"));
 		driveSheetRefresh.setAlignment(SWT.CENTER);
 		driveSheetRefresh.setLayoutData(driveSheetRefreshFormData);
 		driveSheetRefresh.setEnabled(meta.hasDataToConnect());
 		props.setLook(driveSheetRefresh);
 
-		driveSheetLabelFormData = new FormData();
-		driveSheetLabelFormData.top = new FormAttachment(driveSheetField, 0, SWT.CENTER);
-		driveSheetLabelFormData.bottom = new FormAttachment(driveSheetField, 0, SWT.CENTER);
-		driveSheetLabelFormData.left = new FormAttachment(0, 0);
-		driveSheetLabelFormData.right = new FormAttachment(middle, -margin);
-		driveSheetLabel = new Label(shell, SWT.RIGHT);
+		driveSheetLabelFormData = getFormDataForLabel(driveSheetField);
+		driveSheetLabel = new Label(inner, SWT.RIGHT);
 		driveSheetLabel.setText(BaseMessages.getString(PKG, "com.intuitivus.pdi.steps.spreadsheet.dialog.DriveSheet.Label"));
 		driveSheetLabel.setLayoutData(driveSheetLabelFormData);
 		props.setLook(driveSheetLabel);
@@ -315,20 +310,13 @@ public class IntuitivusSpreadsheetStepDialog extends BaseStepDialog implements S
 		//
 		// Drive Range
 		//
-		driveRangeFieldFormData = new FormData();
-		driveRangeFieldFormData.top = new FormAttachment(driveSheetField, margin);
-		driveRangeFieldFormData.left = new FormAttachment(middle, 0);
-		driveRangeFieldFormData.right = new FormAttachment(100, 0);
-		driveRangeField = new TextVar(transMeta, shell, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
+		driveRangeFieldFormData = getFormDataForField(driveSheetField);
+		driveRangeField = new TextVar(transMeta, inner, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
 		driveRangeField.setLayoutData(driveRangeFieldFormData);
 		props.setLook(driveRangeField);
 
-		driveRangeLabelFormData = new FormData();
-		driveRangeLabelFormData.top = new FormAttachment(driveRangeField, 0, SWT.CENTER);
-		driveRangeLabelFormData.bottom = new FormAttachment(driveRangeField, 0, SWT.CENTER);
-		driveRangeLabelFormData.left = new FormAttachment(0, 0);
-		driveRangeLabelFormData.right = new FormAttachment(middle, -margin);
-		driveRangeLabel = new Label(shell, SWT.RIGHT);
+		driveRangeLabelFormData = getFormDataForLabel(driveRangeField);
+		driveRangeLabel = new Label(inner, SWT.RIGHT);
 		driveRangeLabel.setText(BaseMessages.getString(PKG, "com.intuitivus.pdi.steps.spreadsheet.dialog.DriveRange.Label"));
 		driveRangeLabel.setLayoutData(driveRangeLabelFormData);
 		props.setLook(driveRangeLabel);
@@ -336,11 +324,8 @@ public class IntuitivusSpreadsheetStepDialog extends BaseStepDialog implements S
 		//
 		// Drive Header
 		//
-		driveHeaderFieldFormData = new FormData();
-		driveHeaderFieldFormData.top = new FormAttachment(driveRangeField, margin);
-		driveHeaderFieldFormData.left = new FormAttachment(middle, 0);
-		driveHeaderFieldFormData.right = new FormAttachment(100, 0);
-		driveHeaderField = new Combo(shell, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
+		driveHeaderFieldFormData = getFormDataForField(driveRangeField);
+		driveHeaderField = new Combo(inner, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
 		driveHeaderField.add(BaseMessages.getString(PKG, "com.intuitivus.pdi.steps.spreadsheet.dialog.DriveHeader.Type.None"));
 		driveHeaderField.add(BaseMessages.getString(PKG, "com.intuitivus.pdi.steps.spreadsheet.dialog.DriveHeader.Type.Row1"));
 		driveHeaderField.add(BaseMessages.getString(PKG, "com.intuitivus.pdi.steps.spreadsheet.dialog.DriveHeader.Type.FirstRow"));
@@ -348,12 +333,8 @@ public class IntuitivusSpreadsheetStepDialog extends BaseStepDialog implements S
 		driveHeaderField.setLayoutData(driveHeaderFieldFormData);
 		props.setLook(driveHeaderField);
 
-		driveHeaderLabelFormData = new FormData();
-		driveHeaderLabelFormData.top = new FormAttachment(driveHeaderField, 0, SWT.CENTER);
-		driveHeaderLabelFormData.bottom = new FormAttachment(driveHeaderField, 0, SWT.CENTER);
-		driveHeaderLabelFormData.left = new FormAttachment(0, 0);
-		driveHeaderLabelFormData.right = new FormAttachment(middle, -margin);
-		driveHeaderLabel = new Label(shell, SWT.RIGHT);
+		driveHeaderLabelFormData = getFormDataForLabel(driveHeaderField);
+		driveHeaderLabel = new Label(inner, SWT.RIGHT);
 		driveHeaderLabel.setText(BaseMessages.getString(PKG, "com.intuitivus.pdi.steps.spreadsheet.dialog.DriveHeader.Label"));
 		driveHeaderLabel.setLayoutData(driveHeaderLabelFormData);
 		props.setLook(driveHeaderLabel);
@@ -361,21 +342,13 @@ public class IntuitivusSpreadsheetStepDialog extends BaseStepDialog implements S
 		//
 		// Drive Empty Lines
 		//
-		driveEmptyLinesFieldFormData = new FormData();
-		driveEmptyLinesFieldFormData.top = new FormAttachment(driveHeaderField, margin);
-		driveEmptyLinesFieldFormData.left = new FormAttachment(middle, 0);
-		driveEmptyLinesFieldFormData.right = new FormAttachment(100, 0);
-
-		driveEmptyLinesField = new Button(shell, SWT.CHECK | SWT.LEFT | SWT.BORDER);
+		driveEmptyLinesFieldFormData = getFormDataForField(driveHeaderField);
+		driveEmptyLinesField = new Button(inner, SWT.CHECK | SWT.LEFT | SWT.BORDER);
 		driveEmptyLinesField.setLayoutData(driveEmptyLinesFieldFormData);
 		props.setLook(driveEmptyLinesField);
 
-		driveEmptyLinesLabelFormData = new FormData();
-		driveEmptyLinesLabelFormData.top = new FormAttachment(driveEmptyLinesField, 0, SWT.CENTER);
-		driveEmptyLinesLabelFormData.bottom = new FormAttachment(driveEmptyLinesField, 0, SWT.CENTER);
-		driveEmptyLinesLabelFormData.left = new FormAttachment(0, 0);
-		driveEmptyLinesLabelFormData.right = new FormAttachment(middle, -margin);
-		driveEmptyLinesLabel = new Label(shell, SWT.RIGHT);
+		driveEmptyLinesLabelFormData = getFormDataForLabel(driveEmptyLinesField);
+		driveEmptyLinesLabel = new Label(inner, SWT.RIGHT);
 		driveEmptyLinesLabel.setText(BaseMessages.getString(PKG, "com.intuitivus.pdi.steps.spreadsheet.dialog.DriveEmptyLines.Label"));
 		driveEmptyLinesLabel.setLayoutData(driveEmptyLinesLabelFormData);
 		props.setLook(driveEmptyLinesLabel);
@@ -397,10 +370,10 @@ public class IntuitivusSpreadsheetStepDialog extends BaseStepDialog implements S
 		ciKeys[7] = new ColumnInfo(BaseMessages.getString(PKG, "com.intuitivus.pdi.steps.spreadsheet.dialog.table.column.Decimal"), ColumnInfo.COLUMN_TYPE_TEXT, false);
 		ciKeys[8] = new ColumnInfo(BaseMessages.getString(PKG, "com.intuitivus.pdi.steps.spreadsheet.dialog.table.column.Group"), ColumnInfo.COLUMN_TYPE_TEXT, false);
 
-		fieldsTable = new TableView(transMeta, shell, SWT.BORDER | SWT.FULL_SELECTION | SWT.MULTI | SWT.V_SCROLL | SWT.H_SCROLL, ciKeys, keyWidgetRows, null, props);
+		fieldsTable = new TableView(transMeta, inner, SWT.BORDER | SWT.FULL_SELECTION | SWT.MULTI | SWT.V_SCROLL | SWT.H_SCROLL, ciKeys, keyWidgetRows, null, props);
 
 		FormData fdReturn = new FormData();
-		fdReturn.top = new FormAttachment(driveEmptyLinesField, margin);
+		fdReturn.top = new FormAttachment(driveEmptyLinesField, MARGIN);
 		fdReturn.bottom = new FormAttachment(100, -50);
 		fdReturn.left = new FormAttachment(0, 0);
 		fdReturn.right = new FormAttachment(100, 0);
@@ -447,25 +420,25 @@ public class IntuitivusSpreadsheetStepDialog extends BaseStepDialog implements S
 			}
 		});
 
-		wOK = new Button(shell, SWT.PUSH);
+		wOK = new Button(inner, SWT.PUSH);
 		wOK.setText(BaseMessages.getString(PKG, "System.Button.OK"));
 		wOK.addListener(SWT.Selection, lsOK);
 
-		wPreview = new Button(shell, SWT.PUSH);
+		wPreview = new Button(inner, SWT.PUSH);
 		wPreview.setText(BaseMessages.getString(PKG, "System.Button.Preview"));
 		wPreview.addListener(SWT.Selection, lsPreview);
 		wPreview.setEnabled(meta.hasDataToConnect());
 
-		wGet = new Button(shell, SWT.PUSH);
+		wGet = new Button(inner, SWT.PUSH);
 		wGet.setText(BaseMessages.getString(PKG, "System.Button.GetFields"));
 		wGet.addListener(SWT.Selection, lsGet);
 		wGet.setEnabled(meta.hasDataToConnect() && meta.getDriveHeader() != HeaderType.NONE);
 
-		wCancel = new Button(shell, SWT.PUSH);
+		wCancel = new Button(inner, SWT.PUSH);
 		wCancel.setText(BaseMessages.getString(PKG, "System.Button.Cancel"));
 		wCancel.addListener(SWT.Selection, lsCancel);
 
-		BaseStepDialog.positionBottomButtons(shell, new Button[] { wOK, wGet, wPreview, wCancel }, margin, fieldsTable);
+		BaseStepDialog.positionBottomButtons(inner, new Button[] { wOK, wGet, wPreview, wCancel }, MARGIN, fieldsTable);
 
 		shell.addShellListener(new ShellAdapter()
 		{
@@ -479,7 +452,7 @@ public class IntuitivusSpreadsheetStepDialog extends BaseStepDialog implements S
 
 		meta.setChanged(changed);
 		shell.open();
-		
+
 		updateDialog = new UpdateDialog(shell, version);
 		updateDialog.checkVersion();
 
@@ -490,6 +463,48 @@ public class IntuitivusSpreadsheetStepDialog extends BaseStepDialog implements S
 		}
 
 		return stepname;
+	}
+
+	private void addStatusBar()
+	{
+		Composite inner = new Composite(shell, SWT.BORDER);
+		props.setLook(inner);
+		GridLayout gridLayout = new GridLayout(1, true);
+		gridLayout.marginHeight = 0;
+		gridLayout.marginWidth = MARGIN;
+		gridLayout.verticalSpacing = 0;
+		gridLayout.horizontalSpacing = 0;
+		inner.setLayout(gridLayout);
+
+		GridData gridData = new GridData(SWT.FILL, SWT.CENTER, true, false);
+		gridData.heightHint = 25;
+		inner.setLayoutData(gridData);
+
+		GridData versionGridData = new GridData(SWT.FILL, SWT.CENTER, true, true);
+
+		versionLabel = new Label(inner, SWT.LEFT);
+		props.setLook(versionLabel);
+		versionLabel.setText(BaseMessages.getString(PKG, "com.intuitivus.pdi.steps.spreadsheet.footer") + version.getProperty("version"));
+		versionLabel.setLayoutData(versionGridData);
+	}
+
+	private FormData getFormDataForField(Control field)
+	{
+		FormData formData = new FormData();
+		formData.top = new FormAttachment(field, MARGIN);
+		formData.left = new FormAttachment(MIDDLE, 0);
+		formData.right = new FormAttachment(100, 0);
+		return formData;
+	}
+
+	private FormData getFormDataForLabel(Control field)
+	{
+		FormData formData = new FormData();
+		formData.top = new FormAttachment(field, 0, SWT.CENTER);
+		formData.bottom = new FormAttachment(field, 0, SWT.CENTER);
+		formData.left = new FormAttachment(0, 0);
+		formData.right = new FormAttachment(MIDDLE, -MARGIN);
+		return formData;
 	}
 
 	private void getSheets(IntuitivusSpreadsheetStepMeta meta)
@@ -607,8 +622,8 @@ public class IntuitivusSpreadsheetStepDialog extends BaseStepDialog implements S
 	{
 		IntuitivusSpreadsheetStepMeta meta = new IntuitivusSpreadsheetStepMeta();
 		getInfo(meta);
-		
-		if ( !meta.hasDataToConnect() )
+
+		if (!meta.hasDataToConnect())
 			return;
 
 		boolean useDefinedOutput = fieldsTable.table.getItemCount() > 0;
@@ -644,10 +659,10 @@ public class IntuitivusSpreadsheetStepDialog extends BaseStepDialog implements S
 
 		IntuitivusSpreadsheetStepMeta meta = new IntuitivusSpreadsheetStepMeta();
 		getInfo(meta);
-		
-		if ( !meta.hasDataToConnect() || meta.getDriveHeader() == HeaderType.NONE)
+
+		if (!meta.hasDataToConnect() || meta.getDriveHeader() == HeaderType.NONE)
 			return;
-		
+
 		meta.setAdoptOutput(false);
 		try
 		{

@@ -12,7 +12,7 @@ public class PluginUpdaterVersionCheck implements Runnable
 {
 
 	private Properties current;
-	
+
 	PluginUpdaterVersionCheckCallback checkCallback;
 
 	public PluginUpdaterVersionCheck(Properties current, PluginUpdaterVersionCheckCallback checkCallback)
