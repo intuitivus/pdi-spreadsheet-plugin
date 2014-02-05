@@ -13,12 +13,38 @@
 		<copy file="${dist.dir}/${ivy.artifact.id}-${project.revision}.jar" tofile="${approot.stage.dir}/lib/${ivy.artifact.id}.jar" />
 	</target>
 
+	<target name="create-version-file">
+
+		<delete file="${classes.dir}/version.properties" />
+		<propertyfile file="${classes.dir}/version.properties">
+			<entry key="version" value="${project.revision}" />
+			<entry key="builddate" type="date" value="now" />
+		</propertyfile>
+
+		<delete file="${classes.dir}/com/intuitivus/pdi/steps/spreadsheet/version.properties" />
+		<propertyfile file="${classes.dir}/com/intuitivus/pdi/steps/spreadsheet/version.properties" comment="" description="">
+			<entry key="id" value="${package.id}" />
+			<entry key="version" value="${project.revision}" />
+			<entry key="builddate" type="date" value="now" />
+			<entry key="check" value="${project.checker}" />
+			<entry key="download" value="${project.downloader}" />
+		</propertyfile>
+		<replaceregexp file="${classes.dir}/com/intuitivus/pdi/steps/spreadsheet/version.properties" match="^#.*" replace="" byline="true" />
+		<replaceregexp file="${classes.dir}/com/intuitivus/pdi/steps/spreadsheet/version.properties" match="(\r?\n)\s*\r?\n" flags="g" replace="" />
+
+	</target>
+
 	<target name="install" depends="dist" description="compile and install into local PDI installation">
 
 		<echo message="Looking for local PDI installation in ${kettle.dir}" />
+		
 		<available file="${kettle.dir}" type="dir" property="kettle.dir.present" />
 		<fail unless="kettle.dir.present" message="PDI installation not found. Please specify the path to your PDI installation in build/build.properties" />
-		<delete dir="${kettle.dir}/plugins/steps/${package.basename}" />
+		
+		<delete failonerror="false" includeEmptyDirs="true">
+			<fileset dir="${kettle.dir}/plugins/steps/${package.id}" />
+		</delete>
+		
 		<unzip src="${dist.dir}/${package.basename}.zip" dest="${kettle.dir}/plugins/steps/" />
 
 		<echo message="Installed the plugin in PDI. To test, please restart Spoon." />

@@ -50,10 +50,10 @@ public class DialogTest
 		}
 
 	}
-
+	
 	@Test
 	@Ignore
-	public void test() throws KettleException
+	public void dialog() throws KettleException
 	{
 
 		System.setProperty("user.dir", prop.getProperty("kettle.dir"));
@@ -61,6 +61,7 @@ public class DialogTest
 		KettleEnvironment.init();
 		PropsUI.init(Display.getDefault(), 0);
 		IntuitivusSpreadsheetStepMeta meta = new IntuitivusSpreadsheetStepMeta();
+
 		IntuitivusSpreadsheetStepDialog dialog = new IntuitivusSpreadsheetStepDialog(new Shell(), meta, new TransMeta(), "Step");
 		dialog.open();
 

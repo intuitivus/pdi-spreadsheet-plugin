@@ -1,6 +1,7 @@
 package com.intuitivus.pdi.steps.spreadsheet;
 
-import java.util.List;
+import java.io.InputStream;
+import java.util.Properties;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ModifyEvent;
@@ -30,7 +31,6 @@ import org.pentaho.di.trans.TransMeta;
 import org.pentaho.di.trans.TransPreviewFactory;
 import org.pentaho.di.trans.step.BaseStepMeta;
 import org.pentaho.di.trans.step.StepDialogInterface;
-import org.pentaho.di.ui.core.dialog.EnterSelectionDialog;
 import org.pentaho.di.ui.core.dialog.EnterTextDialog;
 import org.pentaho.di.ui.core.dialog.PreviewRowsDialog;
 import org.pentaho.di.ui.core.widget.ColumnInfo;
@@ -41,16 +41,17 @@ import org.pentaho.di.ui.trans.step.BaseStepDialog;
 
 import com.google.gdata.data.spreadsheet.CellEntry;
 import com.google.gdata.data.spreadsheet.WorksheetEntry;
-import com.google.gdata.data.spreadsheet.WorksheetFeed;
-import com.google.gdata.util.AuthenticationException;
 import com.intuitivus.pdi.steps.spreadsheet.IntuitivusSpreadsheetStepMeta.HeaderType;
 import com.intuitivus.pdi.steps.spreadsheet.util.Range;
 import com.intuitivus.pdi.steps.spreadsheet.util.SpreadsheetUtil;
+import com.intuitivus.pdi.steps.spreadsheet.util.threads.SheetGetter;
+import com.intuitivus.pdi.updater.dialog.UpdateDialog;
 
 public class IntuitivusSpreadsheetStepDialog extends BaseStepDialog implements StepDialogInterface
 {
 
-	private static Class<?> PKG = IntuitivusSpreadsheetStepMeta.class;
+	private static Class<?> PKG = IntuitivusSpreadsheetStepDialog.class;
+	private static Properties version;
 
 	private IntuitivusSpreadsheetStepMeta meta;
 
@@ -92,16 +93,29 @@ public class IntuitivusSpreadsheetStepDialog extends BaseStepDialog implements S
 	private FormData driveEmptyLinesLabelFormData;
 	private Button driveEmptyLinesField;
 	private FormData driveEmptyLinesFieldFormData;
+	private UpdateDialog updateDialog;
 
 	public IntuitivusSpreadsheetStepDialog(Shell parent, Object in, TransMeta transMeta, String sname)
 	{
 		super(parent, (BaseStepMeta) in, transMeta, sname);
 		meta = (IntuitivusSpreadsheetStepMeta) in;
+
+		try
+		{
+			if (version == null)
+			{
+				version = new Properties();
+				InputStream stream = getClass().getResourceAsStream("/com/intuitivus/pdi/steps/spreadsheet/version.properties");
+				version.load(stream);
+			}
+		} catch (Exception e)
+		{
+			e.printStackTrace();
+		}
 	}
 
 	public String open()
 	{
-
 		final Shell parent = getParent();
 		final Display display = parent.getDisplay();
 
@@ -120,8 +134,14 @@ public class IntuitivusSpreadsheetStepDialog extends BaseStepDialog implements S
 				{
 					shell.setText(shell.getText() + " *");
 				}
+
 				meta.setChanged();
+
+				IntuitivusSpreadsheetStepMeta meta = new IntuitivusSpreadsheetStepMeta();
+				getInfo(meta);
 				wPreview.setEnabled(meta.hasDataToConnect());
+				wGet.setEnabled(meta.hasDataToConnect() && meta.getDriveHeader() != HeaderType.NONE);
+				driveSheetRefresh.setEnabled(meta.hasDataToConnect());
 			}
 		};
 
@@ -279,6 +299,7 @@ public class IntuitivusSpreadsheetStepDialog extends BaseStepDialog implements S
 		driveSheetRefresh.setText(BaseMessages.getString(PKG, "com.intuitivus.pdi.steps.spreadsheet.dialog.DriveSheet.Search"));
 		driveSheetRefresh.setAlignment(SWT.CENTER);
 		driveSheetRefresh.setLayoutData(driveSheetRefreshFormData);
+		driveSheetRefresh.setEnabled(meta.hasDataToConnect());
 		props.setLook(driveSheetRefresh);
 
 		driveSheetLabelFormData = new FormData();
@@ -405,15 +426,11 @@ public class IntuitivusSpreadsheetStepDialog extends BaseStepDialog implements S
 			{
 				IntuitivusSpreadsheetStepMeta meta = new IntuitivusSpreadsheetStepMeta();
 				getInfo(meta);
+
 				if (meta.hasDataToConnect())
 				{
-					String title = BaseMessages.getString(PKG, "com.intuitivus.pdi.steps.spreadsheet.dialog.DriveSheet.Search.Title");
-					String description = BaseMessages.getString(PKG, "com.intuitivus.pdi.steps.spreadsheet.dialog.DriveSheet.Search.Description");
-					EnterSelectionDialog selection = new EnterSelectionDialog(shell, getSheets(meta), title, description);
-					selection.setMulti(false);
-					String selectedSheet = selection.open();
-					if (selectedSheet != null)
-						driveSheetField.setText(selectedSheet);
+					driveSheetRefresh.setEnabled(false);
+					getSheets(meta);
 				}
 			}
 		});
@@ -442,6 +459,7 @@ public class IntuitivusSpreadsheetStepDialog extends BaseStepDialog implements S
 		wGet = new Button(shell, SWT.PUSH);
 		wGet.setText(BaseMessages.getString(PKG, "System.Button.GetFields"));
 		wGet.addListener(SWT.Selection, lsGet);
+		wGet.setEnabled(meta.hasDataToConnect() && meta.getDriveHeader() != HeaderType.NONE);
 
 		wCancel = new Button(shell, SWT.PUSH);
 		wCancel.setText(BaseMessages.getString(PKG, "System.Button.Cancel"));
@@ -460,8 +478,11 @@ public class IntuitivusSpreadsheetStepDialog extends BaseStepDialog implements S
 		setSize();
 
 		meta.setChanged(changed);
-
 		shell.open();
+		
+		updateDialog = new UpdateDialog(shell, version);
+		updateDialog.checkVersion();
+
 		while (!shell.isDisposed())
 		{
 			if (!display.readAndDispatch())
@@ -469,6 +490,11 @@ public class IntuitivusSpreadsheetStepDialog extends BaseStepDialog implements S
 		}
 
 		return stepname;
+	}
+
+	private void getSheets(IntuitivusSpreadsheetStepMeta meta)
+	{
+		new Thread(new SheetGetter(meta, shell, driveSheetField)).start();
 	}
 
 	private void populateDialog()
@@ -581,6 +607,9 @@ public class IntuitivusSpreadsheetStepDialog extends BaseStepDialog implements S
 	{
 		IntuitivusSpreadsheetStepMeta meta = new IntuitivusSpreadsheetStepMeta();
 		getInfo(meta);
+		
+		if ( !meta.hasDataToConnect() )
+			return;
 
 		boolean useDefinedOutput = fieldsTable.table.getItemCount() > 0;
 		meta.setAdoptOutput(useDefinedOutput);
@@ -613,11 +642,12 @@ public class IntuitivusSpreadsheetStepDialog extends BaseStepDialog implements S
 	private void get()
 	{
 
-		if (meta.getDriveHeader() == HeaderType.NONE)
-			return;
-
 		IntuitivusSpreadsheetStepMeta meta = new IntuitivusSpreadsheetStepMeta();
 		getInfo(meta);
+		
+		if ( !meta.hasDataToConnect() || meta.getDriveHeader() == HeaderType.NONE)
+			return;
+		
 		meta.setAdoptOutput(false);
 		try
 		{
@@ -673,30 +703,6 @@ public class IntuitivusSpreadsheetStepDialog extends BaseStepDialog implements S
 			e.printStackTrace();
 		}
 
-	}
-
-	private String[] getSheets(IntuitivusSpreadsheetStepMeta meta)
-	{
-		try
-		{
-			WorksheetFeed feed = SpreadsheetUtil.connectWorksheetFeed(meta.getDriveUser(), meta.getDrivePassword(), meta.getDriveDocumentId());
-			List<WorksheetEntry> entries = feed.getEntries();
-			String[] entriesList = new String[entries.size()];
-
-			for (int i = 0; i < entriesList.length; i++)
-			{
-				entriesList[i] = entries.get(i).getTitle().getPlainText();
-			}
-
-			return entriesList;
-		} catch (AuthenticationException e)
-		{
-			e.printStackTrace();
-		} catch (Exception e)
-		{
-			e.printStackTrace();
-		}
-		return null;
 	}
 
 	private void getInfo(IntuitivusSpreadsheetStepMeta meta)

@@ -34,6 +34,7 @@ public class IntuitivusSpreadsheetStepMeta extends BaseStepMeta implements StepM
 {
 
 	private static Class<?> PKG = IntuitivusSpreadsheetStepMeta.class;
+	private static String version = null;
 
 	private String driveUser;
 	private String drivePassword;
@@ -93,6 +94,16 @@ public class IntuitivusSpreadsheetStepMeta extends BaseStepMeta implements StepM
 	public String getDriveUser()
 	{
 		return driveUser;
+	}
+
+	public static String getVersion()
+	{
+		return version;
+	}
+
+	public static void setVersion(String version)
+	{
+		IntuitivusSpreadsheetStepMeta.version = version;
 	}
 
 	public void setDriveUser(String driveUser)
@@ -295,6 +306,7 @@ public class IntuitivusSpreadsheetStepMeta extends BaseStepMeta implements StepM
 	{
 		StringBuffer retval = new StringBuffer(150);
 
+		retval.append("    ").append(XMLHandler.addTagValue("version", version));
 		retval.append("    ").append(XMLHandler.addTagValue("user", driveUser));
 		retval.append("    ").append(XMLHandler.addTagValue("password", drivePassword));
 		retval.append("    ").append(XMLHandler.addTagValue("documentId", driveDocumentId));
@@ -328,6 +340,7 @@ public class IntuitivusSpreadsheetStepMeta extends BaseStepMeta implements StepM
 		try
 		{
 
+			version = XMLHandler.getTagValue(stepnode, "version");
 			driveUser = XMLHandler.getTagValue(stepnode, "user");
 			drivePassword = XMLHandler.getTagValue(stepnode, "password");
 			driveDocumentId = XMLHandler.getTagValue(stepnode, "documentId");
@@ -371,6 +384,7 @@ public class IntuitivusSpreadsheetStepMeta extends BaseStepMeta implements StepM
 	{
 		try
 		{
+			rep.saveStepAttribute(id_transformation, id_step, "version", version);
 			rep.saveStepAttribute(id_transformation, id_step, "user", driveUser);
 			rep.saveStepAttribute(id_transformation, id_step, "password", drivePassword);
 			rep.saveStepAttribute(id_transformation, id_step, "documentId", driveDocumentId);
@@ -403,6 +417,7 @@ public class IntuitivusSpreadsheetStepMeta extends BaseStepMeta implements StepM
 	{
 		try
 		{
+			version = rep.getStepAttributeString(id_step, "version");
 			driveUser = rep.getStepAttributeString(id_step, "user");
 			drivePassword = rep.getStepAttributeString(id_step, "password");
 			driveDocumentId = rep.getStepAttributeString(id_step, "documentId");
