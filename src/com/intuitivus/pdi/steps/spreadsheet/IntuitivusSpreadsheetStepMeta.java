@@ -34,7 +34,7 @@ public class IntuitivusSpreadsheetStepMeta extends BaseStepMeta implements StepM
 {
 
 	private static Class<?> PKG = IntuitivusSpreadsheetStepMeta.class;
-	private static String version = null;
+	private String version = null;
 
 	private String driveUser;
 	private String drivePassword;
@@ -96,14 +96,14 @@ public class IntuitivusSpreadsheetStepMeta extends BaseStepMeta implements StepM
 		return driveUser;
 	}
 
-	public static String getVersion()
+	public String getVersion()
 	{
 		return version;
 	}
 
-	public static void setVersion(String version)
+	public void setVersion(String version)
 	{
-		IntuitivusSpreadsheetStepMeta.version = version;
+		this.version = version;
 	}
 
 	public void setDriveUser(String driveUser)

@@ -729,6 +729,7 @@ public class IntuitivusSpreadsheetStepDialog extends BaseStepDialog implements S
 		meta.setDriveSheet(driveSheetField.getText());
 		meta.setDriveHeader(driveHeaderField.getSelectionIndex());
 		meta.setDriveAcceptEmpty(driveEmptyLinesField.getSelection());
+		meta.setVersion(version.getProperty("version"));
 
 		int total = fieldsTable.nrNonEmpty();
 		meta.allocate(total);
