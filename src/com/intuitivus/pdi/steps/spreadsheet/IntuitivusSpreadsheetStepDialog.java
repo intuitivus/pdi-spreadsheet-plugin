@@ -27,6 +27,7 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.widgets.Text;
 import org.pentaho.di.core.Const;
+import org.pentaho.di.core.encryption.Encr;
 import org.pentaho.di.core.row.ValueMeta;
 import org.pentaho.di.core.row.ValueMetaInterface;
 import org.pentaho.di.i18n.BaseMessages;
@@ -723,7 +724,13 @@ public class IntuitivusSpreadsheetStepDialog extends BaseStepDialog implements S
 	private void getInfo(IntuitivusSpreadsheetStepMeta meta)
 	{
 		meta.setDriveUser(driveUserField.getText());
-		meta.setDrivePassword(drivePasswordField.getText());
+		
+		String password = drivePasswordField.getText();
+		if(!password.startsWith(Encr.PASSWORD_ENCRYPTED_PREFIX)) {
+			password = Encr.encryptPasswordIfNotUsingVariables(password);
+		}
+		meta.setDrivePassword(password);
+		
 		meta.setDriveDocumentId(driveDocumentIdField.getText());
 		meta.setDriveRange(driveRangeField.getText());
 		meta.setDriveSheet(driveSheetField.getText());
