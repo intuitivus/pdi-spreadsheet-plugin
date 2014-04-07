@@ -6,6 +6,7 @@ import org.eclipse.swt.widgets.Shell;
 import org.pentaho.di.core.CheckResult;
 import org.pentaho.di.core.CheckResultInterface;
 import org.pentaho.di.core.Const;
+import org.pentaho.di.core.annotations.Step;
 import org.pentaho.di.core.database.DatabaseMeta;
 import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.exception.KettleStepException;
@@ -30,6 +31,7 @@ import org.pentaho.di.trans.step.StepMetaInterface;
 import org.pentaho.metastore.api.IMetaStore;
 import org.w3c.dom.Node;
 
+@Step(id = "pdi-spreadsheet-step,IntuitivusDriveStep", name = "com.intuitivus.pdi.steps.spreadsheet.name", description = "com.intuitivus.pdi.steps.spreadsheet.tooltip", categoryDescription = "com.intuitivus.pdi.steps.spreadsheet.category", image = "com/intuitivus/pdi/steps/spreadsheet/icons/icon.png", i18nPackageName = "com.intuitivus.pdi.steps.spreadsheet")
 public class IntuitivusSpreadsheetStepMeta extends BaseStepMeta implements StepMetaInterface
 {
 
@@ -64,6 +66,18 @@ public class IntuitivusSpreadsheetStepMeta extends BaseStepMeta implements StepM
 	public IntuitivusSpreadsheetStepMeta()
 	{
 		super();
+	}
+
+	public IntuitivusSpreadsheetStepMeta(String driveUser, String drivePassword, String driveDocumentId, String driveSheet, String driveRange, HeaderType driveHeader, boolean driveAcceptEmptyLines)
+	{
+		super();
+		this.driveUser = driveUser;
+		this.drivePassword = drivePassword;
+		this.driveDocumentId = driveDocumentId;
+		this.driveSheet = driveSheet;
+		this.driveRange = driveRange;
+		this.driveHeader = driveHeader;
+		this.driveAcceptEmptyLines = driveAcceptEmptyLines;
 	}
 
 	public StepDialogInterface getDialog(Shell shell, StepMetaInterface meta, TransMeta transMeta, String name)

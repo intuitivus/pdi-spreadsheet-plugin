@@ -135,6 +135,10 @@ public class IntuitivusSpreadsheetStep extends BaseStep implements StepInterface
 					case ValueMetaInterface.TYPE_NUMBER:
 						value = entry[i].getCell().getNumericValue();
 						break;
+						
+//					case ValueMetaInterface.TYPE_DATE:
+//						value = entry[i].getCell().getValue();
+//						break;
 					}
 
 					outputRow[i] = data.outputRowMeta.getValueMeta(i).convertData(data.conversionMeta[i], value);

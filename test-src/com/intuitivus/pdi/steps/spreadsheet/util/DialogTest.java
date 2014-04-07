@@ -7,7 +7,6 @@ import java.util.Properties;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.pentaho.di.core.KettleEnvironment;
 import org.pentaho.di.core.exception.KettleException;
@@ -52,7 +51,6 @@ public class DialogTest
 	}
 
 	@Test
-	@Ignore
 	public void dialog() throws KettleException
 	{
 

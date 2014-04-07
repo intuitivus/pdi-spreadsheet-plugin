@@ -154,14 +154,16 @@ public class Range
 			from.setRow(1);
 		}
 
-		if (to.getCol() == Cell.BOUNDARY)
+		int colCount = worksheet.getColCount();
+		if (to.getCol() == Cell.BOUNDARY || to.getCol() > colCount)
 		{
-			to.setCol(worksheet.getColCount());
+			to.setCol(colCount);
 		}
 
-		if (to.getRow() == Cell.BOUNDARY)
+		int rowCount = worksheet.getRowCount();
+		if (to.getRow() == Cell.BOUNDARY || to.getRow() > rowCount)
 		{
-			to.setRow(worksheet.getRowCount());
+			to.setRow(rowCount);
 		}
 	}
 

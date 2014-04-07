@@ -50,7 +50,6 @@ import com.intuitivus.pdi.steps.spreadsheet.IntuitivusSpreadsheetStepMeta.Header
 import com.intuitivus.pdi.steps.spreadsheet.util.Range;
 import com.intuitivus.pdi.steps.spreadsheet.util.SpreadsheetUtil;
 import com.intuitivus.pdi.steps.spreadsheet.util.threads.SheetGetter;
-import com.intuitivus.pdi.updater.dialog.UpdateDialog;
 
 public class IntuitivusSpreadsheetStepDialog extends BaseStepDialog implements StepDialogInterface
 {
@@ -105,7 +104,6 @@ public class IntuitivusSpreadsheetStepDialog extends BaseStepDialog implements S
 	private FormData driveEmptyLinesLabelFormData;
 	private Button driveEmptyLinesField;
 	private FormData driveEmptyLinesFieldFormData;
-	private UpdateDialog updateDialog;
 
 	public IntuitivusSpreadsheetStepDialog(Shell parent, Object in, TransMeta transMeta, String sname)
 	{
@@ -454,9 +452,6 @@ public class IntuitivusSpreadsheetStepDialog extends BaseStepDialog implements S
 		meta.setChanged(changed);
 		shell.open();
 
-		updateDialog = new UpdateDialog(shell, version);
-		updateDialog.checkVersion();
-
 		while (!shell.isDisposed())
 		{
 			if (!display.readAndDispatch())
@@ -726,7 +721,7 @@ public class IntuitivusSpreadsheetStepDialog extends BaseStepDialog implements S
 		meta.setDriveUser(driveUserField.getText());
 		
 		String password = drivePasswordField.getText();
-		if(!password.startsWith(Encr.PASSWORD_ENCRYPTED_PREFIX)) {
+		if(password.length() > 0 && !password.startsWith(Encr.PASSWORD_ENCRYPTED_PREFIX)) {
 			password = Encr.encryptPasswordIfNotUsingVariables(password);
 		}
 		meta.setDrivePassword(password);

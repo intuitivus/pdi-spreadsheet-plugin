@@ -10,7 +10,7 @@
 		<copy todir="${approot.stage.dir}/lib">
 			<fileset dir="${lib.dir}/external" />
 		</copy>
-		<copy file="${dist.dir}/${ivy.artifact.id}-${project.revision}.jar" tofile="${approot.stage.dir}/lib/${ivy.artifact.id}.jar" />
+		<copy file="${dist.dir}/${ivy.artifact.id}-${project.revision}.jar" tofile="${approot.stage.dir}/${ivy.artifact.id}.jar" />
 	</target>
 
 	<target name="create-version-file">
@@ -26,8 +26,6 @@
 			<entry key="id" value="${package.id}" />
 			<entry key="version" value="${project.revision}" />
 			<entry key="builddate" type="date" value="now" />
-			<entry key="check" value="${project.checker}" />
-			<entry key="download" value="${project.downloader}" />
 		</propertyfile>
 		<replaceregexp file="${classes.dir}/com/intuitivus/pdi/steps/spreadsheet/version.properties" match="^#.*" replace="" byline="true" />
 		<replaceregexp file="${classes.dir}/com/intuitivus/pdi/steps/spreadsheet/version.properties" match="(\r?\n)\s*\r?\n" flags="g" replace="" />
